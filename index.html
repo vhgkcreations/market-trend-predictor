@@ -1,0 +1,615 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 Tomorrow's Market Trend Predictor</title>
+    <style>
+        :root {
+            --bullish: #27ae60;
+            --bearish: #e74c3c;
+            --neutral: #f39c12;
+            --primary: #3498db;
+            --panel: #fff;
+            --text: #333;
+            --bg: #f8f9fa;
+        }
+        .dark-mode {
+            --panel: #2c3e50;
+            --text: #ecf0f1;
+            --bg: #1a252f;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: var(--panel);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2 {
+            color: var(--primary);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .change-input {
+            transition: all 0.3s;
+        }
+        
+        .positive {
+            color: var(--bullish);
+            border-color: var(--bullish);
+        }
+        
+        .negative {
+            color: var(--bearish);
+            border-color: var(--bearish);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .result {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid var(--primary);
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .bullish {
+            border-color: var(--bullish);
+            color: var(--bullish);
+        }
+        
+        .bearish {
+            border-color: var(--bearish);
+            color: var(--bearish);
+        }
+        
+        .neutral {
+            border-color: var(--neutral);
+            color: var(--neutral);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .datetime {
+            text-align: right;
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="datetime" id="datetime"></div>
+    
+    <h1>📈 Tomorrow's Market Trend Predictor</h1>
+    
+    <div class="container">
+        <!-- Input Panel -->
+        <div class="panel">
+            <h2>Mandatory Parameters</h2>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('technical')">Technical</div>
+                <div class="tab" onclick="switchTab('institutional')">Institutional</div>
+                <div class="tab" onclick="switchTab('global')">Global</div>
+            </div>
+            
+            <div class="tab-content active" id="technical-tab">
+                <div class="form-group">
+                    <label for="nifty-close">Nifty Closing Price</label>
+                    <input type="number" id="nifty-close" placeholder="e.g. 22150">
+                </div>
+                
+                <div class="form-group">
+                    <label for="nifty-change">Nifty Change (Points)</label>
+                    <input type="text" id="nifty-change" placeholder="e.g. +120 or -80" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="banknifty-close">Bank Nifty Closing Price</label>
+                    <input type="number" id="banknifty-close" placeholder="e.g. 46500">
+                </div>
+                
+                <div class="form-group">
+                    <label for="volume">Volume (Shares Traded)</label>
+                    <input type="number" id="volume" placeholder="e.g. 1200000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="advance-decline">Advance/Decline Ratio</label>
+                    <input type="text" id="advance-decline" placeholder="e.g. 2:1">
+                </div>
+            </div>
+            
+            <div class="tab-content" id="institutional-tab">
+                <div class="form-group">
+                    <label for="fii-cash">FII Cash Market (₹ Cr)</label>
+                    <input type="text" id="fii-cash" placeholder="e.g. +1200 or -800" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dii-cash">DII Cash Market (₹ Cr)</label>
+                    <input type="text" id="dii-cash" placeholder="e.g. +800 or -500" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fii-futures">FII Index Futures (₹ Cr)</label>
+                    <input type="text" id="fii-futures" placeholder="e.g. +500 or -300" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fii-options">FII Index Options (₹ Cr)</label>
+                    <input type="text" id="fii-options" placeholder="e.g. -200 or +150" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="pcr">Put/Call Ratio</label>
+                    <input type="number" step="0.01" id="pcr" placeholder="e.g. 1.2">
+                </div>
+            </div>
+            
+            <div class="tab-content" id="global-tab">
+                <div class="form-group">
+                    <label for="dow-change">Dow Jones Change</label>
+                    <input type="text" id="dow-change" placeholder="e.g. +250 or -150" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="nasdaq-change">NASDAQ Change</label>
+                    <input type="text" id="nasdaq-change" placeholder="e.g. +120 or -80" class="change-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="us-vix">US VIX</label>
+                    <input type="number" step="0.1" id="us-vix" placeholder="e.g. 18.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sgx-nifty">SGX Nifty Change</label>
+                    <input type="text" id="sgx-nifty" placeholder="e.g. +50 or -30" class="change-input">
+                </div>
+            </div>
+            
+            <button onclick="analyze()">Predict Tomorrow's Trend</button>
+            <button onclick="loadExample()" style="background: #7f8c8d;">Load Example Data</button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing market data...</p>
+            </div>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="panel">
+            <h2>Market Prediction</h2>
+            
+            <div class="result" id="trend-prediction">
+                <strong>Tomorrow's Trend:</strong> <span id="trend">--</span>
+            </div>
+            
+            <div class="result" id="confidence-level">
+                <strong>Confidence:</strong> <span id="confidence">--</span>
+            </div>
+            
+            <div class="result" id="key-factors">
+                <strong>Key Factors:</strong>
+                <ul id="factors-list">
+                    <li>Enter data and click "Predict"</li>
+                </ul>
+            </div>
+            
+            <div class="result" id="trade-recommendation">
+                <strong>Trade Recommendation:</strong>
+                <div id="recommendation">--</div>
+            </div>
+            
+            <div class="result">
+                <strong>Detailed Analysis:</strong>
+                <div id="detailed-analysis">
+                    <p>Complete the input fields to generate analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update datetime
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+        }
+        setInterval(updateDateTime, 60000);
+        updateDateTime();
+        
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        // Color code inputs
+        document.querySelectorAll('.change-input').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.startsWith('+')) {
+                    this.classList.add('positive');
+                    this.classList.remove('negative');
+                } else if (this.value.startsWith('-')) {
+                    this.classList.add('negative');
+                    this.classList.remove('positive');
+                } else {
+                    this.classList.remove('positive', 'negative');
+                }
+            });
+        });
+        
+        // Load example data
+        function loadExample() {
+            // Technical
+            document.getElementById('nifty-close').value = '22150';
+            document.getElementById('nifty-change').value = '+120';
+            document.getElementById('banknifty-close').value = '46500';
+            document.getElementById('volume').value = '1200000';
+            document.getElementById('advance-decline').value = '2:1';
+            
+            // Institutional
+            document.getElementById('fii-cash').value = '+1200';
+            document.getElementById('dii-cash').value = '+800';
+            document.getElementById('fii-futures').value = '+500';
+            document.getElementById('fii-options').value = '-300';
+            document.getElementById('pcr').value = '1.2';
+            
+            // Global
+            document.getElementById('dow-change').value = '+250';
+            document.getElementById('nasdaq-change').value = '+120';
+            document.getElementById('us-vix').value = '18.5';
+            document.getElementById('sgx-nifty').value = '+50';
+            
+            // Trigger input events
+            document.querySelectorAll('.change-input').forEach(input => {
+                input.dispatchEvent(new Event('input'));
+            });
+        }
+        
+        // Main analysis function
+        function analyze() {
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                try {
+                    // Get all values
+                    const technical = {
+                        niftyClose: parseFloat(document.getElementById('nifty-close').value) || 0,
+                        niftyChange: parseInput(document.getElementById('nifty-change').value),
+                        bankNiftyClose: parseFloat(document.getElementById('banknifty-close').value) || 0,
+                        volume: parseInt(document.getElementById('volume').value) || 0,
+                        advanceDecline: document.getElementById('advance-decline').value
+                    };
+                    
+                    const institutional = {
+                        fiiCash: parseInput(document.getElementById('fii-cash').value),
+                        diiCash: parseInput(document.getElementById('dii-cash').value),
+                        fiiFutures: parseInput(document.getElementById('fii-futures').value),
+                        fiiOptions: parseInput(document.getElementById('fii-options').value),
+                        pcr: parseFloat(document.getElementById('pcr').value) || 0
+                    };
+                    
+                    const global = {
+                        dowChange: parseInput(document.getElementById('dow-change').value),
+                        nasdaqChange: parseInput(document.getElementById('nasdaq-change').value),
+                        usVix: parseFloat(document.getElementById('us-vix').value) || 0,
+                        sgxNifty: parseInput(document.getElementById('sgx-nifty').value)
+                    };
+                    
+                    // Calculate scores
+                    const scores = {
+                        technical: calculateTechnicalScore(technical),
+                        institutional: calculateInstitutionalScore(institutional),
+                        global: calculateGlobalScore(global)
+                    };
+                    
+                    // Determine trend
+                    const totalScore = scores.technical + scores.institutional + scores.global;
+                    const confidence = Math.min(100, Math.round(Math.abs(totalScore) * 10));
+                    
+                    let trend, trendClass;
+                    if (totalScore > 3) {
+                        trend = "BULLISH";
+                        trendClass = "bullish";
+                    } else if (totalScore < -3) {
+                        trend = "BEARISH";
+                        trendClass = "bearish";
+                    } else {
+                        trend = "NEUTRAL";
+                        trendClass = "neutral";
+                    }
+                    
+                    // Update UI
+                    document.getElementById('trend').textContent = trend;
+                    document.getElementById('trend-prediction').className = `result ${trendClass}`;
+                    document.getElementById('confidence').textContent = `${confidence}%`;
+                    
+                    // Generate key factors
+                    const factors = generateKeyFactors(technical, institutional, global, scores);
+                    document.getElementById('factors-list').innerHTML = factors.map(f => `<li>${f}</li>`).join('');
+                    
+                    // Generate recommendation
+                    const recommendation = generateRecommendation(trend, technical.niftyClose, institutional.pcr);
+                    document.getElementById('recommendation').innerHTML = recommendation;
+                    
+                    // Detailed analysis
+                    document.getElementById('detailed-analysis').innerHTML = generateDetailedAnalysis(
+                        technical, institutional, global, scores, totalScore
+                    );
+                    
+                } catch (error) {
+                    console.error("Analysis error:", error);
+                    document.getElementById('detailed-analysis').innerHTML = 
+                        `<p class="negative">Error in analysis. Please check your inputs.</p>`;
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 1500);
+        }
+        
+        // Helper functions
+        function parseInput(value) {
+            if (!value) return 0;
+            return parseFloat(value.replace('+', '')) || 0;
+        }
+        
+        function calculateTechnicalScore(data) {
+            let score = 0;
+            
+            // Nifty momentum
+            score += data.niftyChange / 25; // ±4 points per 100pt move
+            
+            // Bank Nifty relative strength
+            if (data.bankNiftyClose > 0) {
+                const bankNiftyChange = data.bankNiftyClose - (data.niftyClose - data.niftyChange);
+                score += bankNiftyChange / 50;
+            }
+            
+            // Volume confirmation
+            if (data.volume > 1000000) score += 1;
+            
+            // Market breadth
+            if (data.advanceDecline) {
+                const [advance, decline] = data.advanceDecline.split(':').map(Number);
+                if (advance > decline) score += (advance/decline) * 0.5;
+            }
+            
+            return score;
+        }
+        
+        function calculateInstitutionalScore(data) {
+            let score = 0;
+            
+            // Cash market activity
+            score += data.fiiCash / 800;
+            score += data.diiCash / 600;
+            
+            // Derivatives positioning
+            score += data.fiiFutures / 500;
+            score += data.fiiOptions / -300; // Negative because put buying is bearish
+            
+            // Put/Call ratio
+            if (data.pcr > 1.5) score -= 2;  // Overbought
+            if (data.pcr < 0.8) score += 2;  // Oversold
+            
+            return score;
+        }
+        
+        function calculateGlobalScore(data) {
+            let score = 0;
+            
+            // US market correlation
+            score += data.dowChange / 100;
+            score += data.nasdaqChange / 80;
+            
+            // Volatility
+            if (data.usVix > 22) score -= (data.usVix - 20) * 0.2;
+            
+            // SGX Nifty
+            score += data.sgxNifty / 30;
+            
+            return score;
+        }
+        
+        function generateKeyFactors(technical, institutional, global, scores) {
+            const factors = [];
+            
+            // Technical factors
+            if (technical.niftyChange !== 0) {
+                factors.push(`Nifty ${technical.niftyChange >= 0 ? 'gained' : 'lost'} ${Math.abs(technical.niftyChange)} points`);
+            }
+            
+            if (institutional.fiiCash !== 0) {
+                factors.push(`FIIs were ${institutional.fiiCash >= 0 ? 'net buyers' : 'net sellers'} (₹${Math.abs(institutional.fiiCash)} Cr)`);
+            }
+            
+            if (global.dowChange !== 0) {
+                factors.push(`Dow Jones ${global.dowChange >= 0 ? 'up' : 'down'} ${Math.abs(global.dowChange)} points`);
+            }
+            
+            // Add strongest factors
+            const allFactors = [
+                { name: "Nifty Momentum", value: scores.technical },
+                { name: "Institutional Flow", value: scores.institutional },
+                { name: "Global Cues", value: scores.global }
+            ];
+            
+            allFactors.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+            factors.push(`Strongest factor: ${allFactors[0].name}`);
+            
+            return factors;
+        }
+        
+        function generateRecommendation(trend, niftyClose, pcr) {
+            const baseStrike = Math.round(niftyClose / 50) * 50;
+            const atr = Math.round(niftyClose * 0.005); // 0.5% as ATR
+            
+            if (trend === "BULLISH") {
+                return `
+                    <p>Recommended Action: <span class="bullish">BUY CALLS</span></p>
+                    <p>Suggested Strike: ${baseStrike + atr} CE</p>
+                    <p>Stop Loss: ${baseStrike - atr}</p>
+                `;
+            } else if (trend === "BEARISH") {
+                return `
+                    <p>Recommended Action: <span class="bearish">BUY PUTS</span></p>
+                    <p>Suggested Strike: ${baseStrike - atr} PE</p>
+                    <p>Stop Loss: ${baseStrike + atr}</p>
+                `;
+            } else {
+                return `
+                    <p>Recommended Action: <span class="neutral">SELL STRADDLE</span></p>
+                    <p>Suggested Strikes: ${baseStrike} CE & PE</p>
+                    <p>Ideal PCR Range: 0.8-1.2 (Current: ${pcr.toFixed(2)})</p>
+                `;
+            }
+        }
+        
+        function generateDetailedAnalysis(technical, institutional, global, scores, totalScore) {
+            return `
+                <h3>Score Breakdown</h3>
+                <p>Technical: ${scores.technical.toFixed(2)}</p>
+                <p>Institutional: ${scores.institutional.toFixed(2)}</p>
+                <p>Global: ${scores.global.toFixed(2)}</p>
+                <p><strong>Total Score: ${totalScore.toFixed(2)}</strong></p>
+                
+                <h3>Institutional Activity</h3>
+                <p>FII Cash: ₹${institutional.fiiCash >= 0 ? '+' : ''}${institutional.fiiCash} Cr</p>
+                <p>DII Cash: ₹${institutional.diiCash >= 0 ? '+' : ''}${institutional.diiCash} Cr</p>
+                <p>FII Derivatives: ₹${institutional.fiiFutures + institutional.fiiOptions >= 0 ? '+' : ''}${institutional.fiiFutures + institutional.fiiOptions} Cr</p>
+                <p>Put/Call Ratio: ${institutional.pcr.toFixed(2)}</p>
+                
+                <h3>Technical Analysis</h3>
+                <p>Nifty: ${technical.niftyClose} (${technical.niftyChange >= 0 ? '+' : ''}${technical.niftyChange})</p>
+                <p>Bank Nifty: ${technical.bankNiftyClose}</p>
+                <p>Volume: ${technical.volume.toLocaleString()}</p>
+                <p>Advance/Decline: ${technical.advanceDecline || 'N/A'}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
