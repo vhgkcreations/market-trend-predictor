@@ -401,9 +401,15 @@
       document.getElementById(`${tabName}-tab`).classList.add('active');
     }
     
-    // Color code inputs
+    // Auto-add '+' sign for change inputs and color coding
     document.querySelectorAll('.change-input').forEach(input => {
       input.addEventListener('input', function() {
+        // Auto-add '+' if there's a value but no sign
+        if (this.value && !['+', '-'].includes(this.value[0])) {
+          this.value = '+' + this.value;
+        }
+        
+        // Color coding
         if (this.value.startsWith('+')) {
           this.classList.add('positive');
           this.classList.remove('negative');
@@ -414,7 +420,6 @@
           this.classList.remove('positive', 'negative');
         }
         
-        // Update ticker
         updateTicker();
       });
     });
@@ -483,7 +488,11 @@
         input.value = '';
         input.classList.remove('positive', 'negative');
       });
+      
+      // Reset the ticker
       document.getElementById('tickerText').innerHTML = '';
+      
+      // Reset all results
       document.getElementById('mood').textContent = '--';
       document.getElementById('confidence').textContent = '--';
       document.getElementById('factors-list').innerHTML = '<li>Enter data and click "Analyze"</li>';
@@ -491,6 +500,13 @@
       document.getElementById('strike').textContent = '';
       document.getElementById('detailed-analysis').innerHTML = '<p>Complete the input fields to generate analysis.</p>';
       document.getElementById('trend-prediction').className = 'result';
+    }
+    
+    // Parse input values (treats numbers without sign as positive)
+    function parseInput(value) {
+      if (!value) return 0;
+      // If starts with '-' then negative, otherwise positive
+      return value.startsWith('-') ? -Math.abs(parseFloat(value)) : Math.abs(parseFloat(value));
     }
     
     // Main analysis function
@@ -580,12 +596,6 @@
       }, 1500);
     }
     
-    // Helper functions
-    function parseInput(value) {
-      if (!value) return 0;
-      return parseFloat(value.replace('+', '')) || 0;
-    }
-    
     function calculateTechnicalScore(data) {
       let score = 0;
       
@@ -614,8 +624,8 @@
       let score = 0;
       
       // Cash market activity
-      score += data.fiiCash / 800;
-      score += data.diiCash / 600;
+      score += data.fiiCash / 1000;
+      score += data.diiCash / 800;
       
       // Derivatives positioning
       score += data.fiiFutures / 500;
